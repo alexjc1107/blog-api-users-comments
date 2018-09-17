@@ -32,7 +32,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', jsonParser, (req, res) => {
-    const requiredFields = ['title', 'content', 'author'];
+    const requiredFields = ['title', 'content', 'author_id'];
     for (let i = 0; i < requiredFields.length; i++) {
         const field = requiredFields[i];
         if (!(field in req.body)) {
@@ -45,7 +45,7 @@ router.post('/', jsonParser, (req, res) => {
     blogPost.create({
             title: req.body.title,
             content: req.body.content,
-            author: req.body.author
+            author: req.body.author_id
         })
         .then(post => res.status(201).json(post.serialize()))
         .catch(error => {

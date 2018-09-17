@@ -9,7 +9,7 @@ const postSchema = mongoose.Schema({
     title: { type: String, required: true },
     content: { type: String },
     created: { type: Date, default: Date.now },
-    author: { type: mongoose.Schema.Types.ObjectId, ref: 'author' },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'Author' },
     comments: [commentSchema]
 });
 
@@ -47,7 +47,15 @@ postSchema.methods.serialize = function() {
     };
 };
 
+authorSchema.methods.serialize = function() {
+    return {
+        _id: this._id,
+        name: `${this.firstName} ${this.lastName}`,
+        userName: this.userName
+    };
+};
+
 const author = mongoose.model('Author', authorSchema);
-const blogPost = mongoose.model("Post", postSchema);
+const blogPost = mongoose.model("BlogPost", postSchema);
 
 module.exports = { blogPost, author };
