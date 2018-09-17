@@ -3,111 +3,15 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 const { PORT, DATABASE_URL } = require('./config');
-const { blogPost } = require('./models');
-const bodyParser = require('body-parser');
-const jsonParser = bodyParser.json();
+const postsRouter = require('./postsRouter');
+const authorsRouter = require('./authorsRouter');
 const app = express();
 
 app.use(morgan('common'));
 app.use(express.json());
 
-app.get('/posts', (req, res) => {
-    blogPost.find()
-        .then(posts => {
-            res.json(
-                posts.map(
-                    (post) => post.serialize())
-            );
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
-        });
-});
-
-app.get('/posts/:id', (req, res) => {
-    blogPost.findById(req.params.id)
-        .then(posts => {
-            res.json(
-                posts.serialize())
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
-        });
-});
-
-app.post('/posts', jsonParser, (req, res) => {
-    const requiredFields = ['title', 'content', 'author'];
-    for (let i = 0; i < requiredFields.length; i++) {
-        const field = requiredFields[i];
-        if (!(field in req.body)) {
-            const message = `Missing \`${field}\` in request body`
-            console.error(message);
-            return res.status(400).send(message);
-        }
-    }
-
-    blogPost.create({
-            title: req.body.title,
-            content: req.body.content,
-            author: req.body.author
-        })
-        .then(post => res.status(201).json(post.serialize()))
-        .catch(error => {
-            console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
-        });
-});
-
-app.put('/posts/:id', (req, res) => {
-    const requiredFields = ['id'];
-    for (let i = 0; i < requiredFields.length; i++) {
-        const field = requiredFields[i];
-        if (!(field in req.body)) {
-            const message = `Missing \`${field}\` in request body`
-            console.error(message);
-            return res.status(400).send(message);
-        }
-    }
-
-    if (req.params.id !== req.body.id) {
-        const message = `Request path id (${req.params.id}) and request body id (${req.body.id}) must match`;
-        console.error(message);
-        return res.status(400).send(message);
-    }
-
-    const toUpdate = {};
-    const canUpdate = ['title', 'content', 'author'];
-    for (let j = 0; j < canUpdate.length; j++) {
-        const field = canUpdate[j];
-        if (field in req.body) {
-            toUpdate[field] = req.body[field];
-            console.log(toUpdate[field]);
-        }
-    }
-
-    blogPost.findByIdAndUpdate(req.params.id, {
-            $set: toUpdate
-        }, { new: true })
-        .then(res.status(204).end())
-        .catch(error => {
-            console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
-        });
-});
-
-app.delete('/posts/:id', (req, res) => {
-    blogPost.findByIdAndRemove(req.params.id)
-        .then(() => {
-            console.log(`Deleted BlogPost id \`${req.params.ID}\``);
-            res.status(204).end();
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
-        });
-});
+app.use('/posts', postsRouter);
+app.use('/authors', authorsRouter);
 
 let server;
 
